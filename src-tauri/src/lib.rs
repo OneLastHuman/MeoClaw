@@ -786,6 +786,16 @@ fn check_backend_health(state: tauri::State<AppState>) -> backend::BackendHealth
     }
 }
 
+// 在系统浏览器中打开 URL
+#[tauri::command]
+fn open_url(url: String) -> Result<(), String> {
+    std::process::Command::new("open")
+        .arg(&url)
+        .spawn()
+        .map_err(|e| format!("Failed to open URL: {}", e))?;
+    Ok(())
+}
+
 // Response 气泡结构
 #[derive(Clone, serde::Serialize)]
 struct ResponseBubblePayload {
@@ -808,7 +818,8 @@ pub fn run() {
                 .level(log::LevelFilter::Debug)
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![switch_animation, update_bubble, send_to_openclaw, send_to_hermes, send_message, test_openclaw, test_bubble, test_response_bubble, test_hermes, show_bubble_window, hide_bubble_window, update_bubble_content, move_bubble_window, enter_response_mode, exit_response_mode, switch_backend, get_current_backend, check_backend_health, check_all_backends_health])
+
+        .invoke_handler(tauri::generate_handler![switch_animation, update_bubble, send_to_openclaw, send_to_hermes, send_message, test_openclaw, test_bubble, test_response_bubble, test_hermes, show_bubble_window, hide_bubble_window, update_bubble_content, move_bubble_window, enter_response_mode, exit_response_mode, switch_backend, get_current_backend, check_backend_health, check_all_backends_health, open_url])
         .setup(|app| {
             let app_handle = app.handle().clone();
 

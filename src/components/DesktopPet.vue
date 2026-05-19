@@ -37,9 +37,11 @@ import {
   getWindowMetrics,
   petScale,
   responseSound,
+  responseVolume,
   scaledCSSVars,
   setPetScale,
   setResponseSound,
+  setResponseVolume,
   getResponseSoundFile,
   RESPONSE_SOUND_OFF,
   windowModeForState,
@@ -153,7 +155,7 @@ function playResponseSound() {
 
   try {
     const audio = new Audio(soundFile);
-    audio.volume = 1;
+    audio.volume = responseVolume.value;
     audio.play().catch((err) => {
       console.warn('[Sound] Failed to play response sound:', err);
     });
@@ -1394,6 +1396,7 @@ let unlistenResponseBubble: (() => void) | null = null;
 let unlistenDrag: (() => void) | null = null;
 let unlistenScale: (() => void) | null = null;
 let unlistenSound: (() => void) | null = null;
+let unlistenVolume: (() => void) | null = null;
 let removeStorageListener: (() => void) | null = null;
 
 watch(windowBehaviorState, (state) => {
@@ -1453,6 +1456,12 @@ onMounted(async () => {
     }
   });
 
+  unlistenVolume = await listen('response-volume-changed', (event: any) => {
+    if (typeof event.payload?.volume === 'number') {
+      setResponseVolume(event.payload.volume);
+    }
+  });
+
   const onStorage = (event: StorageEvent) => {
     if (event.key !== 'meoclaw.petScale' || event.newValue == null) {
       return;
@@ -1506,6 +1515,7 @@ onUnmounted(() => {
   unlistenDrag?.();
   unlistenScale?.();
   unlistenSound?.();
+  unlistenVolume?.();
   removeStorageListener?.();
   cancelSnapAnimation();
   cancelPeekLeaveTimer();

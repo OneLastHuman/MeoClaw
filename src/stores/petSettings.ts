@@ -69,6 +69,51 @@ export function getResponseSoundFile(soundId: ResponseSoundId): string | null {
   return sound?.file ?? null;
 }
 
+// 音量配置
+export const VOLUME_STORAGE_KEY = 'meoclaw.volume';
+export const VOLUME_MIN = 0;
+export const VOLUME_MAX = 1;
+export const VOLUME_STEP = 0.1;
+export const VOLUME_DEFAULT = 0.5;
+
+export function loadVolume(): number {
+  if (typeof window === 'undefined') {
+    return VOLUME_DEFAULT;
+  }
+
+  const stored = window.localStorage.getItem(VOLUME_STORAGE_KEY);
+  if (stored === null) {
+    return VOLUME_DEFAULT;
+  }
+
+  const parsed = Number(stored);
+  if (!Number.isFinite(parsed)) {
+    return VOLUME_DEFAULT;
+  }
+
+  return Math.min(VOLUME_MAX, Math.max(VOLUME_MIN, parsed));
+}
+
+export function persistVolume(volume: number) {
+  if (typeof window === 'undefined') return;
+
+  window.localStorage.setItem(VOLUME_STORAGE_KEY, String(volume));
+}
+
+export const responseVolume = ref<number>(loadVolume());
+
+watch(
+  responseVolume,
+  (volume) => {
+    persistVolume(volume);
+  },
+  { flush: 'post' },
+);
+
+export function setResponseVolume(volume: number) {
+  responseVolume.value = Math.min(VOLUME_MAX, Math.max(VOLUME_MIN, volume));
+}
+
 export type WindowMode = 'normal' | 'working' | 'response';
 
 export const BASE_LAYOUT = {
