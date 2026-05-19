@@ -1120,9 +1120,9 @@ pub fn run() {
                 }
 
                 // === Menu Bar Tray Icon ===
-                let quit_item = MenuItemBuilder::with_id("quit", "退出").build(app)?;
-                let restart_item = MenuItemBuilder::with_id("restart", "重启").build(app)?;
-                let options_item = MenuItemBuilder::with_id("options", "选项").build(app)?;
+                let quit_item = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
+                let restart_item = MenuItemBuilder::with_id("restart", "Restart").build(app)?;
+                let options_item = MenuItemBuilder::with_id("options", "Options").build(app)?;
 
                 // 创建主菜单（选项放在最前面）
                 let menu = MenuBuilder::new(app)

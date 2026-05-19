@@ -106,9 +106,9 @@ export async function showContextMenu(showAll = false) {
 
   // 创建分身占位符
   const createCloneItem = await MenuItem.new({
-    text: '创建分身',
+    text: 'Create Clone',
     async action() {
-      console.log('[MENU] 创建分身 clicked - TODO: implement clone creation');
+      console.log('[MENU] Create Clone clicked - TODO: implement clone creation');
     },
   });
 
