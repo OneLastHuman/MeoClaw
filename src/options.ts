@@ -125,6 +125,7 @@ app.innerHTML = `
           <div class="nav-item active" data-panel="size">SIZE</div>
           <div class="nav-item" data-panel="backend">BACKEND</div>
           <div class="nav-item" data-panel="sound">SOUND</div>
+          <div class="nav-item" data-panel="about">ABOUT</div>
 
           <!-- Version -->
           <div class="version">v1.0.0</div>
@@ -218,6 +219,35 @@ app.innerHTML = `
                 <span>0%</span>
                 <span>50%</span>
                 <span>100%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ABOUT Panel -->
+          <div class="panel-content" data-panel="about">
+            <div class="section-title">
+              <h3>ABOUT</h3>
+              <p>PROJECT INFO</p>
+            </div>
+            <div class="about-content">
+              <div class="about-logo">
+                <div class="about-logo-icon">&lt;/&gt;</div>
+                <span class="about-logo-text">MEO CLAW</span>
+              </div>
+              <p class="about-desc">An openclaw/hermes desktop pet assistant built with Tauri v2</p>
+              <div class="about-link" id="github-link">
+                <span class="about-link-label">GITHUB</span>
+                <span class="about-link-url">github.com/OneLastHuman/MeoClaw</span>
+              </div>
+              <div class="about-meta">
+                <div class="about-meta-item">
+                  <span class="about-meta-key">VERSION</span>
+                  <span class="about-meta-value">v1.0.0</span>
+                </div>
+                <div class="about-meta-item">
+                  <span class="about-meta-key">LICENSE</span>
+                  <span class="about-meta-value">Apache 2.0</span>
+                </div>
               </div>
             </div>
           </div>
@@ -807,6 +837,108 @@ style.textContent = `
     background: #c0392b;
     transform: translateY(0);
   }
+
+  /* About Panel */
+  .about-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding-top: 12px;
+  }
+
+  .about-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .about-logo-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--accent);
+    border: 3px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    color: #fff;
+  }
+
+  .about-logo-text {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: var(--text-dark);
+  }
+
+  .about-desc {
+    font-family: monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+    margin: 0;
+    max-width: 320px;
+    line-height: 1.5;
+  }
+
+  .about-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 20px;
+    background: var(--bg-light);
+    border: 3px solid var(--border);
+    cursor: pointer;
+    transition: background 150ms ease;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .about-link:hover {
+    background: var(--bg-dark);
+  }
+
+  .about-link-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: var(--text-muted);
+  }
+
+  .about-link-url {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--accent);
+    word-break: break-all;
+    text-align: center;
+  }
+
+  .about-meta {
+    display: flex;
+    gap: 20px;
+    margin-top: 4px;
+  }
+
+  .about-meta-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .about-meta-key {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    color: var(--text-muted);
+  }
+
+  .about-meta-value {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    color: var(--text-dark);
+  }
 `;
 document.head.appendChild(style);
 
@@ -1151,4 +1283,9 @@ listen('response-sound-changed', (event: any) => {
   if (event.payload?.soundId) {
     updateSoundSelection(event.payload.soundId);
   }
+});
+
+// ========== About 面板逻辑 ==========
+document.getElementById('github-link')?.addEventListener('click', () => {
+  invoke('open_url', { url: 'https://github.com/OneLastHuman/MeoClaw' });
 });
