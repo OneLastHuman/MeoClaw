@@ -26,6 +26,15 @@ No need to open terminals, web browsers, or any third-party channels — directl
 - **Dual Backend Support** — Compatible with both OpenClaw (WebSocket) and Hermes (HTTP/SSE), switch freely at runtime
 - **Free Dragging & Resizing** — Drag the pet anywhere on screen, auto-snaps to edges, adjustable scale from 50% to 200%
 
+## Screenshots
+
+| | | |
+|:---:|:---:|:---:|
+| <img width="240" src="assets/screenshots/idle.png"> | <img width="240" src="assets/screenshots/bubble.png"> | <img width="240" src="assets/screenshots/file-drop.png"> |
+| Pet idle on desktop | Tool call bubble | File drag & drop |
+| <img width="240" src="assets/screenshots/chat.png"> | <img width="240" src="assets/screenshots/drag.png"> | <img width="240" src="assets/screenshots/settings.png"> |
+| Response display | Drag & edge snap | Settings panel |
+
 ## Quick Start
 
 ### Prerequisites

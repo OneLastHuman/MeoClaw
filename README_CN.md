@@ -26,6 +26,15 @@
 - **双后端支持** — 同时兼容 OpenClaw（WebSocket）和 Hermes（HTTP/SSE），运行时自由切换
 - **随意拖拽变化** — 位置随意拖动，并支持贴边和大小调节
 
+## 截图展示
+
+| | | |
+|:---:|:---:|:---:|
+| <img width="240" src="assets/screenshots/idle.png"> | <img width="240" src="assets/screenshots/bubble.png"> | <img width="240" src="assets/screenshots/file-drop.png"> |
+| 桌宠待机 | 工具调用气泡 | 文件拖入 |
+| <img width="240" src="assets/screenshots/chat.png"> | <img width="240" src="assets/screenshots/drag.png"> | <img width="240" src="assets/screenshots/settings.png"> |
+| 回复展示 | 拖拽贴边 | 设置面板 |
+
 ## 快速开始
 
 ### 环境要求
