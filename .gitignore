@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+src-tauri/target/
+
+# Vite cache
+.vite/
+
+# OS files
+.DS_Store
+**/.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Vibe kanban
+.vibe-kanban-workspaces/
+
+# TypeScript build info
+*.tsbuildinfo
+
+
+.claude/worktrees/
+
+.kanban
+
+# AI / Editor 配置
+.claude/
+.obsidian/
+.superpowers/
+AGENTS.md
+CLAUDE.md
+
+# Tauri 自动生成
+src-tauri/gen/
+
+# 调试 / 测试页
+bubble-debugger.html
+public/bubble-debugger.html
+public/test_bubble_preview.html
+src/test_invoke.html
+src-tauri/test_invoke.html
+
+# 开发脚本
+generate_edge_placeholder_sprites.py
+generate_shock_sprite.py
+
+# 示例 / 基准
+src-tauri/examples/
+
