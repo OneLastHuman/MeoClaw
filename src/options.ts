@@ -25,6 +25,39 @@ const RESPONSE_SOUNDS = [
   { id: 'crisp.wav', label: 'Crisp', file: '/sound/response/crisp.wav' },
 ];
 
+// 音量配置
+const VOLUME_STORAGE_KEY = 'meoclaw.volume';
+const VOLUME_MIN = 0;
+const VOLUME_MAX = 1;
+
+const VOLUME_DEFAULT = 0.5;
+
+function loadVolume(): number {
+  const stored = window.localStorage.getItem(VOLUME_STORAGE_KEY);
+  if (stored === null) return VOLUME_DEFAULT;
+  const parsed = Number(stored);
+  if (!Number.isFinite(parsed)) return VOLUME_DEFAULT;
+  return Math.min(VOLUME_MAX, Math.max(VOLUME_MIN, parsed));
+}
+
+function saveVolume(volume: number) {
+  const clamped = Math.min(VOLUME_MAX, Math.max(VOLUME_MIN, volume));
+  window.localStorage.setItem(VOLUME_STORAGE_KEY, String(clamped));
+  emit('response-volume-changed', { volume: clamped });
+}
+
+function volumeToSlider(volume: number): number {
+  return Math.round(volume * 100);
+}
+
+function sliderToVolume(sliderValue: number): number {
+  return sliderValue / 100;
+}
+
+function formatVolume(volume: number) {
+  return `${Math.round(volume * 100)}%`;
+}
+
 let pendingBackend: string | null = null;
 
 function normalizeScale(raw: unknown) {
@@ -170,6 +203,23 @@ app.innerHTML = `
               `).join('')}
             </div>
             <p class="sound-hint">CLICK TO SELECT AND PREVIEW</p>
+            <div class="volume-section">
+              <div class="volume-header">
+                <span class="volume-label">VOLUME</span>
+                <span class="volume-value" id="volume-value">${formatVolume(loadVolume())}</span>
+              </div>
+              <div class="slider-container">
+                <div class="slider-track">
+                  <div class="slider-fill" id="volume-slider-fill"></div>
+                </div>
+                <input id="volume-slider" class="scale-slider" type="range" min="0" max="100" step="10" value="${volumeToSlider(loadVolume())}" />
+              </div>
+              <div class="slider-labels">
+                <span>0%</span>
+                <span>50%</span>
+                <span>100%</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -604,13 +654,37 @@ style.textContent = `
 
   /* Sound Hint */
   .sound-hint {
-    margin-top: auto;
     padding-top: 12px;
     border-top: 3px solid var(--bg-dark);
     font-family: monospace;
     font-size: 9px;
     color: var(--text-muted);
     text-align: center;
+    margin-bottom: 14px;
+  }
+
+  /* Volume Section */
+  .volume-section {
+    margin-top: auto;
+  }
+
+  .volume-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .volume-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    color: var(--text-muted);
+  }
+
+  .volume-value {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    color: var(--accent);
   }
 
   /* Modal */
@@ -1006,7 +1080,7 @@ function playSoundPreview(soundId: string) {
 
   try {
     const audio = new Audio(sound.file);
-    audio.volume = 1;
+    audio.volume = loadVolume();
     audio.play().catch((err) => {
       console.warn('[Sound Preview] Failed to play:', err);
     });
@@ -1036,6 +1110,40 @@ document.querySelectorAll('#sound-selector .selector-item').forEach((item) => {
       saveResponseSound(soundId);
     }
   });
+});
+
+// ========== 音量滑块逻辑 ==========
+const volumeSlider = document.querySelector<HTMLInputElement>('#volume-slider')!;
+const volumeValue = document.querySelector<HTMLElement>('#volume-value')!;
+const volumeSliderFill = document.querySelector<HTMLElement>('#volume-slider-fill')!;
+
+function updateVolumeSliderUI(sliderValue: number) {
+  const percent = (sliderValue / 100) * 100;
+  volumeSliderFill.style.width = `${percent}%`;
+}
+
+let currentVolumeSliderValue = volumeToSlider(loadVolume());
+volumeSlider.value = String(currentVolumeSliderValue);
+volumeValue.textContent = formatVolume(sliderToVolume(currentVolumeSliderValue));
+updateVolumeSliderUI(currentVolumeSliderValue);
+
+volumeSlider.addEventListener('input', () => {
+  currentVolumeSliderValue = Number(volumeSlider.value);
+  const vol = sliderToVolume(currentVolumeSliderValue);
+  volumeValue.textContent = formatVolume(vol);
+  updateVolumeSliderUI(currentVolumeSliderValue);
+  saveVolume(vol);
+});
+
+// 监听音量事件（用于同步多窗口）
+listen('response-volume-changed', (event: any) => {
+  if (typeof event.payload?.volume === 'number') {
+    const vol = event.payload.volume;
+    currentVolumeSliderValue = volumeToSlider(vol);
+    volumeSlider.value = String(currentVolumeSliderValue);
+    volumeValue.textContent = formatVolume(vol);
+    updateVolumeSliderUI(currentVolumeSliderValue);
+  }
 });
 
 // 监听音效切换事件（用于同步多窗口）
