@@ -252,7 +252,7 @@ impl HermesDiscovery {
 /// 验证 Hermes 实例（尝试多种端点和认证方式）
 fn verify_hermes_health(url: &str, api_key: Option<&str>) -> Result<bool, DiscoveryError> {
     let client = reqwest::blocking::Client::builder()
-        .timeout(Duration::from_secs(2))
+        .timeout(Duration::from_secs(1))
         .build()
         .map_err(|_| DiscoveryError::NetworkError)?;
 

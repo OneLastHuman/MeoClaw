@@ -55,16 +55,12 @@ pub struct OpenClawClient {
 }
 
 impl OpenClawClient {
-    /// 创建新客户端（使用自动发现）
+    /// 创建新客户端（不做同步发现）
     ///
-    /// 注意：此方法会阻塞最多 6 秒进行端口发现
+    /// 使用默认 URL 快速创建，实际的端口发现和连接
+    /// 在 run() 方法中异步执行，不阻塞 UI 启动。
     pub fn new() -> Result<(Self, mpsc::Receiver<String>), String> {
-        // 同步阻塞发现，最多 6 秒（两个端口各 3 秒超时）
-        let url = discover()
-            .map(|r| r.url)
-            .ok_or_else(|| "OpenClaw Gateway not found on ports 18789 or 19001".to_string())?;
-
-        Self::from_url(url)
+        Self::from_url("ws://127.0.0.1:18789".to_string())
     }
 
     /// 使用指定的 Gateway URL 创建客户端

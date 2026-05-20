@@ -823,34 +823,15 @@ pub fn run() {
         .setup(|app| {
             let app_handle = app.handle().clone();
 
+            // ===== 快速初始化（不阻塞窗口显示） =====
+
             // 初始化 BackendManager 并注册为 app state
             let backend_manager = Arc::new(Mutex::new(BackendManager::new()));
 
-            // 先执行 Hermes 发现（4 层发现）
-            let discovered_instances = {
-                if let Ok(manager) = backend_manager.lock() {
-                    manager.discover_hermes_all()
-                } else {
-                    Vec::new()
-                }
-            };
-
-            log::info!("[Backend] Discovered {} Hermes instances", discovered_instances.len());
-
-            // 根据发现结果创建 HermesClient
-            let hermes_client = if let Some(best) = discovered_instances.first() {
-                log::info!("[Backend] Using discovered Hermes: {}", best.endpoint);
-                HermesClient::from_config(best)
-            } else {
-                log::info!("[Backend] No Hermes discovered, using default");
-                HermesClient::new()
-            };
-
-            // 注册后端客户端
+            // OpenClawClientAdapter 不需要发现，立即注册
             if let Ok(manager) = backend_manager.lock() {
                 let _ = manager.register_client(Box::new(OpenClawClientAdapter::new()));
-                let _ = manager.register_client(Box::new(hermes_client));
-                log::info!("[Backend] Registered OpenClawClientAdapter and HermesClient to BackendManager");
+                log::info!("[Backend] Registered OpenClawClientAdapter");
             }
 
             app.manage(AppState {
@@ -862,13 +843,13 @@ pub fn run() {
             let _ = fs::write(state_file(), "idle\n");
             log::info!("[OpenClaw] Initialized state file");
 
-            // 启动 OpenClaw WebSocket 客户端
+            // 创建 OpenClaw 客户端（不做同步发现，立即返回）
             match OpenClawClient::new() {
                 Ok((client, msg_rx)) => {
                     let client = Arc::new(client);
                     let client_for_task = client.clone();
 
-                    log::info!("[OpenClaw] Client created, starting connection...");
+                    log::info!("[OpenClaw] Client created, setting up callbacks...");
 
                     // 设置 lifecycle 回调
                     let cb_app = app_handle.clone();
@@ -876,8 +857,6 @@ pub fn run() {
                         let state = if event.is_start() {
                             "working"
                         } else if event.is_end() || event.is_error() {
-                            // 工具执行完成后进入 Response 状态（不是 idle）
-                            // 同时清空气泡
                             let payload = BubblePayload {
                                 tools: vec![],
                             };
@@ -889,12 +868,10 @@ pub fn run() {
 
                         log::info!("[OpenClaw] Lifecycle -> switch to '{}'", state);
 
-                        // 写入状态文件
                         if let Err(e) = fs::write(state_file(), format!("{}\n", state)) {
                             log::error!("[OpenClaw] Failed to write state: {}", e);
                         }
 
-                        // 发送状态切换事件
                         if let Err(e) = cb_app.emit("switch-animation", state) {
                             log::error!("[OpenClaw] Failed to emit state: {}", e);
                         }
@@ -906,13 +883,10 @@ pub fn run() {
                         log::info!("[OpenClaw] Tool event: {} (phase: {}) args: {:?}", tool_name, phase, args);
 
                         if phase == "start" || phase == "update" {
-                            // args 为 null 时不发送更新（保留之前的数据）
                             if !args.is_null() {
-                                // 提取工具详情
                                 let detail = extract_tool_detail(&tool_name, &args).unwrap_or_default();
                                 log::info!("[OpenClaw] Tool detail: {:?}", detail);
 
-                                // 发送气泡更新（直接传递工具信息）
                                 let payload = BubblePayload {
                                     tools: vec![ToolCall {
                                         name: tool_name.clone(),
@@ -929,7 +903,6 @@ pub fn run() {
                                 log::info!("[OpenClaw] Tool update with null args, skipping bubble emit");
                             }
                         } else if phase == "end" {
-                            // 工具执行结束，清除气泡
                             let payload = BubblePayload {
                                 tools: vec![],
                             };
@@ -937,12 +910,11 @@ pub fn run() {
                         }
                     }));
 
-                    // 设置 response 回调（用于显示最终回答气泡）
+                    // 设置 response 回调
                     let cb_app3 = app_handle.clone();
                     client.set_response_callback(Arc::new(move |full_text: String| {
                         log::info!("[OpenClaw] Response text received: {:.100}", full_text);
 
-                        // 发送 response 气泡更新事件
                         let payload = ResponseBubblePayload {
                             text: full_text,
                         };
@@ -955,7 +927,7 @@ pub fn run() {
                     // 将 client 存储到 app 状态中供 command 使用
                     app.manage(client.clone());
 
-                    // 创建 HTTP 轮询的停止信号通道 (mpsc)
+                    // 创建 HTTP 轮询的停止信号通道
                     let (http_stop_tx, http_stop_rx) = tokio::sync::mpsc::channel::<()>(1);
                     let http_stop_tx_for_callback = http_stop_tx.clone();
                     let app_handle_for_callback = app_handle.clone();
@@ -963,53 +935,71 @@ pub fn run() {
                     // 设置连接状态回调 - 协调 HTTP 轮询
                     client.set_connection_status_callback(Arc::new(move |connected: bool| {
                         if !connected {
-                            // WebSocket 断开，启动 HTTP 轮询
-                            // 先停止可能正在运行的 HTTP 轮询
                             let _ = http_stop_tx_for_callback.try_send(());
                             log::info!("[OpenClaw] WebSocket disconnected, starting HTTP polling...");
                             let _stop_tx = http_stop_tx_for_callback.clone();
                             let app = app_handle_for_callback.clone();
-                            // 创建新的停止通道
                             let (_new_stop_tx, new_stop_rx) = tokio::sync::mpsc::channel::<()>(1);
                             async_runtime::spawn(async move {
                                 start_http_polling_with_stop(app, new_stop_rx).await;
                             });
-                            // 通知前端
                             let _ = app_handle_for_callback.emit("gateway-disconnected", ());
                         } else {
-                            // WebSocket 已连接，停止 HTTP 轮询
                             log::info!("[OpenClaw] WebSocket reconnected, stopping HTTP polling...");
                             let _ = http_stop_tx_for_callback.try_send(());
-                            // 通知前端
                             let _ = app_handle_for_callback.emit("gateway-connected", ());
                         }
                     }));
 
-                    // 存储 http_stop_tx 以便在 client 错误时停止 HTTP 轮询
                     let http_stop_tx_for_task = http_stop_tx.clone();
                     app.manage(http_stop_tx);
 
+                    // ===== 后台任务：Hermes 发现 + OpenClaw 连接 =====
+                    let bg_backend_manager = backend_manager.clone();
+                    let bg_app = app_handle.clone();
                     async_runtime::spawn(async move {
+                        // ---- Hermes 发现（异步线程池执行，不阻塞 UI）----
+                        let discovered_instances = tokio::task::spawn_blocking(move || {
+                            if let Ok(manager) = bg_backend_manager.lock() {
+                                manager.discover_hermes_all()
+                            } else {
+                                Vec::new()
+                            }
+                        }).await.unwrap_or_default();
+
+                        log::info!("[Backend] Discovered {} Hermes instances (background)", discovered_instances.len());
+
+                        // 根据发现结果创建并注册 HermesClient
+                        let hermes_client = if let Some(best) = discovered_instances.first() {
+                            log::info!("[Backend] Using discovered Hermes: {}", best.endpoint);
+                            HermesClient::from_config(best)
+                        } else {
+                            log::info!("[Backend] No Hermes discovered, using default");
+                            HermesClient::new()
+                        };
+
+                        if let Ok(manager) = bg_app.state::<AppState>().backend_manager.lock() {
+                            let _ = manager.register_client(Box::new(hermes_client));
+                            log::info!("[Backend] Registered HermesClient to BackendManager (background)");
+                        }
+
+                        // ---- OpenClaw 后台连接（内部做异步发现 + WebSocket）----
                         if let Err(e) = client_for_task.run(msg_rx).await {
                             log::error!("[OpenClaw] Client error: {}", e);
-                            // WebSocket 连接彻底失败（重连耗尽），启动 HTTP 轮询
                             log::info!("[OpenClaw] Falling back to HTTP polling...");
                             let _ = http_stop_tx_for_task.send(()).await;
                             let (new_stop_tx, new_stop_rx) = tokio::sync::mpsc::channel::<()>(1);
-                            let app_clone = app_handle.clone();
+                            let app_clone = bg_app.clone();
                             async_runtime::spawn(start_http_polling_with_stop(app_clone, new_stop_rx));
-                            // 通知前端
-                            let _ = app_handle.emit("gateway-disconnected", ());
+                            let _ = bg_app.emit("gateway-disconnected", ());
                         }
                     });
                 }
                 Err(e) => {
                     log::error!("[OpenClaw] Failed to create client: {}", e);
-                    // 回退到 HTTP 轮询
                     let (_stop_tx, stop_rx) = tokio::sync::mpsc::channel::<()>(1);
                     let app_clone = app_handle.clone();
                     async_runtime::spawn(start_http_polling_with_stop(app_clone, stop_rx));
-                    // 通知前端
                     let _ = app_handle.emit("gateway-disconnected", ());
                 }
             }
@@ -1209,7 +1199,7 @@ async fn start_http_polling_with_stop(app_handle: AppHandle, mut stop_rx: tokio:
     const POLL_INTERVAL_SECS: u64 = 5;
 
     let client = match reqwest::Client::builder()
-        .timeout(Duration::from_secs(2))
+        .timeout(Duration::from_secs(1))
         .build()
     {
         Ok(c) => c,

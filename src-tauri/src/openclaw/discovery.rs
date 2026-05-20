@@ -11,8 +11,8 @@ use std::time::Duration;
 const DEFAULT_PORT: u16 = 18789;
 /// Dev 模式端口
 const DEV_PORT: u16 = 19001;
-/// 端口探测超时（秒）
-const PROBE_TIMEOUT_SECS: u64 = 3;
+/// 端口探测超时（秒）— 对本地回环地址 1 秒足够
+const PROBE_TIMEOUT_SECS: u64 = 1;
 
 /// 发现结果
 #[derive(Debug, Clone)]
@@ -55,23 +55,29 @@ fn probe_port(port: u16) -> bool {
 
 /// 发现可用的 OpenClaw Gateway
 ///
-/// 按顺序尝试 18789 → 19001，返回第一个可用的。
-/// 最坏情况耗时约 6 秒（两个端口各 3 秒超时）。
+/// 并发尝试 18789 和 19001，返回第一个可用的。
+/// 最坏情况耗时约 1 秒（各 1 秒超时，并发执行）。
 ///
 /// 同步函数，可以在任何上下文中调用。
 pub fn discover() -> Option<DiscoveryResult> {
     log::info!("[OpenClaw Discovery] Starting discovery...");
 
-    // 先试默认端口
-    if probe_port(DEFAULT_PORT) {
-        log::info!("[OpenClaw Discovery] Found OpenClaw on default port {}", DEFAULT_PORT);
-        return Some(DiscoveryResult::new(DEFAULT_PORT));
-    }
+    let ports = [DEFAULT_PORT, DEV_PORT];
+    let handles: Vec<_> = ports.iter().map(|&port| {
+        std::thread::spawn(move || {
+            if probe_port(port) {
+                Some(DiscoveryResult::new(port))
+            } else {
+                None
+            }
+        })
+    }).collect();
 
-    // 再试 dev 模式端口
-    if probe_port(DEV_PORT) {
-        log::info!("[OpenClaw Discovery] Found OpenClaw on dev port {}", DEV_PORT);
-        return Some(DiscoveryResult::new(DEV_PORT));
+    for handle in handles {
+        if let Some(result) = handle.join().ok().flatten() {
+            log::info!("[OpenClaw Discovery] Found OpenClaw on port {}", result.port);
+            return Some(result);
+        }
     }
 
     log::warn!("[OpenClaw Discovery] No OpenClaw Gateway found on ports {} or {}", DEFAULT_PORT, DEV_PORT);
