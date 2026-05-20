@@ -282,7 +282,13 @@ document.body.appendChild(toast);
 // CSS 样式
 const style = document.createElement('style');
 style.textContent = `
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  @font-face {
+    font-family: 'Press Start 2P';
+    src: url('/fonts/PressStart2P.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
 
   :root {
     --bg-light: #fff3dc;
