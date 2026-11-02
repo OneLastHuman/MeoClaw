@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeoClaw — 住在你桌面上的 AI 小猫</title>
+<meta name="description" content="MeoClaw 是一只住在桌面上的像素猫。双击就能和你的 OpenClaw / Hermes 说话，文件拖过去它也能读。不用开浏览器，也不用开终端。">
+<meta name="theme-color" content="#cfdcb9">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MeoClaw">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:title" content="MeoClaw — 住在你桌面上的 AI 小猫">
+<meta property="og:description" content="双击就能和你的 OpenClaw / Hermes 说话，文件拖过去它也能读。">
+<meta property="og:image" content="https://onelasthuman.github.io/MeoClaw/assets/og.png">
+<meta property="og:url" content="https://onelasthuman.github.io/MeoClaw/">
+<link rel="icon" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<link rel="preload" href="assets/fonts/pixel.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+
+<main id="main">
+
+  <section class="hero" id="top" aria-labelledby="hero-title">
+    <header class="top">
+      <a class="brand" href="#top">
+        <img src="assets/icon.png" width="24" height="24" alt="">
+        <span class="brand__name">MEOCLAW</span>
+      </a>
+      <nav class="nav" aria-label="页面导航">
+        <a href="#states">状态</a>
+        <a href="#features">功能</a>
+        <a href="#shots">截图</a>
+        <a href="#download">下载</a>
+      </nav>
+      <a class="top__gh" href="https://github.com/OneLastHuman/MeoClaw" target="_blank" rel="noopener">GitHub</a>
+    </header>
+
+    <div class="hero__grid">
+      <div class="hero__copy">
+        <h1 id="hero-title">桌面上<span class="hang">，</span><br>有只猫在等你。</h1>
+        <p class="lede">双击它就能问话，文件拖过去它也能读。它会去问你配置好的 OpenClaw 或 Hermes，再把答案带回桌面。不用开浏览器，不用开终端。</p>
+        <div class="hero__actions">
+          <a class="btn" href="https://github.com/OneLastHuman/MeoClaw/releases/download/v0.1.0/MeoClaw_0.1.0_universal.dmg">下载 macOS 版</a>
+          <a class="btn btn--line" href="https://github.com/OneLastHuman/MeoClaw/releases/download/v0.1.0/MeoClaw_0.1.0_x64-setup.exe">下载 Windows 版</a>
+        </div>
+        <p class="fine">v0.1.0，免费开源。macOS 11+ 和 Windows 10+。</p>
+      </div>
+
+      <div class="hero__stage">
+        <div class="pet" id="pet" tabindex="0" role="button" aria-label="MeoClaw 桌宠演示" aria-describedby="petHint">
+          <div class="speech" id="speech">
+            <div class="speech__home" id="speechHome">
+              <p id="petHint">点我聊两句。<br>也可以拖着我走。</p>
+              <button class="speech__go" id="sayHi" type="button">聊聊</button>
+            </div>
+            <form class="ask" id="askForm" hidden>
+              <label class="sr-only" for="askInput">问 MeoClaw 一句</label>
+              <input id="askInput" name="q" type="text" placeholder="问我点什么…" autocomplete="off" spellcheck="false">
+              <button class="ask__send" type="submit">发送</button>
+            </form>
+            <div class="speech__answer" id="speechAnswer" hidden>
+              <p class="speech__text" id="answerText" aria-live="polite"></p>
+              <button class="speech__again" id="askAgain" type="button">再问一句</button>
+            </div>
+          </div>
+          <p class="peek-note" aria-hidden="true">过来看看</p>
+          <div class="pet__body">
+            <button class="pet__hit" id="petHit" type="button" aria-label="和 MeoClaw 说话">
+              <img class="pet__sprite" id="sprite" src="assets/cat-idle.webp" alt="穿着灰色卫衣、抱着笔记本的像素橘猫" width="316" height="452" draggable="false">
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="states" aria-labelledby="states-title">
+    <div class="wrap">
+      <div class="section__head">
+        <h2 id="states-title">它的一天</h2>
+        <p class="section__intro">待机、听你说、干活、回话。下面这些名字，就是它状态机里的真实状态。</p>
+      </div>
+      <ol class="states">
+        <li class="state">
+          <div class="state__art"><img src="assets/frames/idle.png" width="234" height="300" alt="待机中的 MeoClaw，站着眨了一下眼"></div>
+          <p class="state__name">IDLE</p>
+          <h3>待机</h3>
+          <p>待在屏幕角落，偶尔眨眨眼。不挡路，也不抢焦点。</p>
+        </li>
+        <li class="state">
+          <div class="state__art"><img src="assets/frames/input.png" width="234" height="300" alt="MeoClaw 张嘴说话，头上冒出省略号气泡"></div>
+          <p class="state__name">ENTER INPUT</p>
+          <h3>听你说</h3>
+          <p>双击弹出输入框，就在它脚下。按 Enter 发送，空着按 Enter 就收起。</p>
+        </li>
+        <li class="state">
+          <div class="state__art"><img src="assets/frames/work.png" width="234" height="300" alt="MeoClaw 盘腿坐着，抱着笔记本打字"></div>
+          <p class="state__name">WORKING</p>
+          <h3>干活</h3>
+          <p>抱着笔记本等后端。调工具的时候，会顶个气泡告诉你它在干什么。</p>
+        </li>
+        <li class="state">
+          <div class="state__art"><img src="assets/frames/received.png" width="234" height="300" alt="MeoClaw 抱着一摞文件，有点吃力"></div>
+          <p class="state__name">RESPONSE</p>
+          <h3>回话</h3>
+          <p>答案带回来了。气泡会自己撑高，回复再长也不截断。</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" id="features" aria-labelledby="features-title">
+    <div class="wrap">
+      <div class="section__head">
+        <h2 id="features-title">能做什么</h2>
+        <p class="section__intro">四件事，都在桌面这一小块地方完成。</p>
+      </div>
+      <div class="features">
+        <article class="feature">
+          <h3>双击说话</h3>
+          <p>输入框就在它脚下，问完按 Enter。答案用气泡显示，长答案会自己变高，不用滚来滚去。</p>
+        </article>
+        <article class="feature">
+          <h3>拖文件给它</h3>
+          <p>图片、PDF、代码、压缩包都认。文件类型会变成对应的小图标，再发给 AI。</p>
+          <ul class="filetypes" aria-label="支持的文件类型">
+            <li><img src="assets/pic.png" width="30" height="38" alt=""><span>图片</span></li>
+            <li><img src="assets/doc.png" width="42" height="35" alt=""><span>PDF</span></li>
+            <li><img src="assets/code.png" width="30" height="38" alt=""><span>代码</span></li>
+            <li><img src="assets/docs.png" width="46" height="36" alt=""><span>压缩包</span></li>
+            <li><img src="assets/music.png" width="30" height="38" alt=""><span>音频</span></li>
+          </ul>
+        </article>
+        <article class="feature">
+          <h3>贴边半隐藏</h3>
+          <p>拖到屏幕边缘就自动吸附，只露半个身子。鼠标移过去，它再探出来。50% 到 200% 的大小都能调。</p>
+        </article>
+        <article class="feature">
+          <h3>后端随时换</h3>
+          <p>OpenClaw 走 WebSocket，Hermes 走 HTTP/SSE。右键菜单里切换，不用重启，也不用改配置。</p>
+        </article>
+      </div>
+      <p class="features__more">还有：托盘图标、收到消息时的提示音、右键菜单里的重启和退出。</p>
+    </div>
+  </section>
+
+  <section class="section section--shots" id="shots" aria-labelledby="shots-title">
+    <div class="wrap">
+      <div class="section__head">
+        <h2 id="shots-title">在你桌面上</h2>
+        <p class="section__intro">真实截图，没有加滤镜。</p>
+      </div>
+      <div class="shots">
+        <figure class="shot">
+          <div class="shot__art"><img src="assets/screenshots/bubble.png" width="640" height="484" alt="MeoClaw 正在工作时，头上顶着工具调用气泡"></div>
+          <figcaption>调工具的时候，气泡会告诉你它在干什么。</figcaption>
+        </figure>
+        <figure class="shot">
+          <div class="shot__art"><img src="assets/screenshots/drag.png" width="360" height="360" alt="MeoClaw 贴在屏幕边缘，只露出半个身子"></div>
+          <figcaption>拖到屏幕边缘，它只露半个身子；鼠标过去再探头。</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="download" aria-labelledby="download-title">
+    <div class="wrap">
+      <div class="band__grid">
+        <div class="band__copy">
+          <h2 id="download-title">把它放到桌面上</h2>
+          <p>下载安装包，打开就能用。第一次启动后，在右键菜单里选 OpenClaw 或 Hermes。</p>
+          <div class="band__actions">
+            <a class="btn" href="https://github.com/OneLastHuman/MeoClaw/releases/download/v0.1.0/MeoClaw_0.1.0_universal.dmg">下载 macOS 版<span>通用版，94 MB</span></a>
+            <a class="btn btn--line" href="https://github.com/OneLastHuman/MeoClaw/releases/download/v0.1.0/MeoClaw_0.1.0_x64-setup.exe">下载 Windows 版<span>x64，45 MB</span></a>
+          </div>
+          <p class="fine">v0.1.0，Apache 2.0。<a href="https://github.com/OneLastHuman/MeoClaw/releases">所有版本</a></p>
+        </div>
+
+        <details class="source">
+          <summary>Linux，或者想从源码跑</summary>
+          <div class="source__body">
+            <p>需要 Node.js 18+ 和 Rust 1.70+。Ubuntu 20.04 以上可以直接构建。</p>
+            <div class="code">
+              <pre><code id="sourceCode">git clone https://github.com/OneLastHuman/MeoClaw.git
+cd MeoClaw
+npm install
+npm run tauri build</code></pre>
+              <button class="code__copy" id="copyBtn" type="button">复制</button>
+            </div>
+            <p class="source__note">开发时用 <code>npm run tauri dev</code>，改前端会热更新。</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__grid">
+    <div class="foot__brand">
+      <img src="assets/icon.png" width="28" height="28" alt="">
+      <p><strong>MeoClaw</strong><br>一只住在桌面上的像素猫。</p>
+    </div>
+    <nav class="foot__links" aria-label="页脚链接">
+      <a href="https://github.com/OneLastHuman/MeoClaw">GitHub</a>
+      <a href="https://github.com/OneLastHuman/MeoClaw/issues">提问题</a>
+      <a href="https://github.com/OneLastHuman/MeoClaw/releases">更新记录</a>
+      <a href="https://github.com/OneLastHuman/MeoClaw/blob/main/README.md">English README</a>
+    </nav>
+    <p class="foot__legal">Apache 2.0 © 2026 Hue<br>用 Tauri v2 和 Vue 3 做的。</p>
+  </div>
+</footer>
+
+<script src="main.js"></script>
+</body>
+</html>
